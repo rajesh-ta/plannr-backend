@@ -13,6 +13,6 @@ class UserStory(Base):
   sprint_id: Mapped[str] = mapped_column(UUID(as_uuid=True), ForeignKey("boards.sprints.id"))
   title: Mapped[str] = mapped_column(String(200))
   description: Mapped[str | None] = mapped_column(Text)
-  status: Mapped[str] = mapped_column(String(50))
-  priority: Mapped[int] = mapped_column(Integer)
+  status: Mapped[str] = mapped_column(String(30))
+  priority: Mapped[int | None] = mapped_column(Integer, nullable=True)
   created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
