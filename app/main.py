@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.routers import project, sprint, user, task, user_story
 from app.models import user as user_model
 from app.models import project as project_model
@@ -7,6 +8,15 @@ from app.models import task as task_model
 from app.models import user_story as user_story_model
 
 app = FastAPI(title="Plannr Backend API", version="1.0.0")
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 app.include_router(project.router)
 app.include_router(sprint.router)
