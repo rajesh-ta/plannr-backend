@@ -22,6 +22,12 @@ async def get_user_stories(db: AsyncSession = Depends(get_db)):
   user_stories = result.scalars().all()
   return user_stories
 
+@router.get("/sprint/{sprint_id}", response_model=list[UserStoryOut])
+async def get_user_stories_by_sprint(sprint_id: UUID, db: AsyncSession = Depends(get_db)):
+  result = await db.execute(select(UserStory).where(UserStory.sprint_id == sprint_id))
+  user_stories = result.scalars().all()
+  return user_stories
+
 @router.get("/{user_story_id}", response_model=UserStoryOut)
 async def get_user_story(user_story_id: UUID, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(UserStory).where(UserStory.id == user_story_id))
