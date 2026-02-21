@@ -16,7 +16,7 @@ class SprintOut(BaseModel):
   start_date: date | None = None
   end_date: date | None = None
   status: str
-  sprint_number: int
+  # sprint_number: int | None = None
   created_at: datetime
 
   class Config:

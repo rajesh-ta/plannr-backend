@@ -15,5 +15,5 @@ class Sprint(Base):
   start_date: Mapped[date | None] = mapped_column(Date)
   end_date: Mapped[date | None] = mapped_column(Date)
   status: Mapped[str] = mapped_column(String(50))
-  sprint_number: Mapped[int] = mapped_column(Integer)
+  sprint_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
   created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
