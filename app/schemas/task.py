@@ -12,6 +12,7 @@ class TaskCreate(BaseModel):
 
 class TaskOut(BaseModel):
   id: UUID
+  task_no: int
   user_story_id: UUID
   title: str
   description: str | None

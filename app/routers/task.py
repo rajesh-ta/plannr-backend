@@ -22,6 +22,12 @@ async def get_tasks(db: AsyncSession = Depends(get_db)):
   tasks = result.scalars().all()
   return tasks
 
+@router.get("/user-story/{user_story_id}", response_model=list[TaskOut])
+async def get_tasks_by_user_story(user_story_id: UUID, db: AsyncSession = Depends(get_db)):
+  result = await db.execute(select(Task).where(Task.user_story_id == user_story_id))
+  tasks = result.scalars().all()
+  return tasks
+
 @router.get("/{task_id}", response_model=TaskOut)
 async def get_task(task_id: UUID, db: AsyncSession = Depends(get_db)):
   result = await db.execute(select(Task).where(Task.id == task_id))
