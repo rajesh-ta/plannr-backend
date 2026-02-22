@@ -5,3 +5,8 @@ sqlalchemy
 asyncpg
 python-dotenv
 alembic
+httpx
+python-jose[cryptography]
+passlib[bcrypt]
+httpx
+python-multipart

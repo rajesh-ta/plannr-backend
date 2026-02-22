@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import project, sprint, user, task, user_story
+from app.routers import auth
 from app.models import user as user_model
 from app.models import project as project_model
 from app.models import sprint as sprint_model
@@ -18,6 +19,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+app.include_router(auth.router)
 app.include_router(project.router)
 app.include_router(sprint.router)
 app.include_router(user.router)
