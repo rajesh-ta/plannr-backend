@@ -3,10 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.task import Task
 from app.schemas.task import TaskCreate, TaskOut
 
-router = APIRouter(prefix="/tasks", tags=["tasks"])
+router = APIRouter(
+  prefix="/tasks",
+  tags=["tasks"],
+  dependencies=[Depends(get_current_user)],
+)
 
 @router.post("/", response_model=TaskOut)
 async def create_task(data: TaskCreate, db: AsyncSession = Depends(get_db)):

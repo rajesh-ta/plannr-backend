@@ -3,10 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.user_story import UserStory
 from app.schemas.user_story import UserStoryCreate, UserStoryOut
 
-router = APIRouter(prefix="/user-stories", tags=["user-stories"])
+router = APIRouter(
+  prefix="/user-stories",
+  tags=["user-stories"],
+  dependencies=[Depends(get_current_user)],
+)
 
 @router.post("/", response_model=UserStoryOut)
 async def create_user_story(data: UserStoryCreate, db: AsyncSession = Depends(get_db)):

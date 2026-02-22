@@ -2,10 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectOut
 
-router = APIRouter(prefix="/projects", tags=["projects"])
+router = APIRouter(
+  prefix="/projects",
+  tags=["projects"],
+  dependencies=[Depends(get_current_user)],
+)
 
 @router.post("/", response_model=ProjectOut)
 async def create_project(data: ProjectCreate, db: AsyncSession = Depends(get_db)):

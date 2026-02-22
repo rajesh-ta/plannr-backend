@@ -4,10 +4,15 @@ from sqlalchemy import select
 from uuid import uuid4
 from datetime import datetime
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.user import UserCreate, UserOut
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(
+  prefix="/users",
+  tags=["users"],
+  dependencies=[Depends(get_current_user)],
+)
 
 @router.post("/", response_model=UserOut)
 async def create_user(data: UserCreate, db: AsyncSession = Depends(get_db)):

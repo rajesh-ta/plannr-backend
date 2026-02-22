@@ -5,10 +5,15 @@ from sqlalchemy import select
 from uuid import UUID
 from typing import List
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.schemas.sprint import SprintCreate, SprintOut
 from app.models.sprint import Sprint
 
-router = APIRouter(prefix="/sprints", tags=["sprints"])
+router = APIRouter(
+  prefix="/sprints",
+  tags=["sprints"],
+  dependencies=[Depends(get_current_user)],
+)
 
 # create a new sprint
 @router.post("/", response_model=SprintOut)
