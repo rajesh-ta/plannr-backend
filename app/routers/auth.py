@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from uuid import uuid4
 import httpx
 
@@ -19,6 +20,23 @@ from app.schemas.user import UserOut
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def _user_to_out(user: User) -> UserOut:
+    """Build a UserOut from an ORM User with role_info eagerly loaded."""
+    return UserOut(
+        id=user.id,
+        name=user.name,
+        email=user.email,
+        role_id=user.role_id,
+        role_name=user.role_info.role_name if user.role_info else None,
+        status=user.status,
+        last_modified_on=user.last_modified_on,
+        last_modified_by=user.last_modified_by,
+        avatar_url=user.avatar_url,
+        auth_provider=user.auth_provider,
+        created_at=user.created_at,
+    )
+
+
 # ─── Endpoints ──────────────────────────────────────────────────────────────
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -32,16 +50,18 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
         id=str(uuid4()),
         name=data.name,
         email=data.email,
-        role=data.role,
         password_hash=get_password_hash(data.password),
         auth_provider="local",
     )
     db.add(user)
     await db.commit()
-    await db.refresh(user)
 
+    result2 = await db.execute(
+        select(User).options(selectinload(User.role_info)).where(User.id == user.id)
+    )
+    user = result2.scalar_one()
     token = create_access_token({"sub": str(user.id)})
-    return AuthResponse(access_token=token, user=UserOut.model_validate(user))
+    return AuthResponse(access_token=token, user=_user_to_out(user))
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -56,8 +76,12 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
     if not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
+    result2 = await db.execute(
+        select(User).options(selectinload(User.role_info)).where(User.id == user.id)
+    )
+    user = result2.scalar_one()
     token = create_access_token({"sub": str(user.id)})
-    return AuthResponse(access_token=token, user=UserOut.model_validate(user))
+    return AuthResponse(access_token=token, user=_user_to_out(user))
 
 
 @router.post("/google", response_model=AuthResponse)
@@ -110,7 +134,6 @@ async def google_auth(data: GoogleAuthRequest, db: AsyncSession = Depends(get_db
                 id=str(uuid4()),
                 name=name,
                 email=email,
-                role="member",
                 google_id=google_id,
                 avatar_url=avatar_url,
                 auth_provider="google",
@@ -118,13 +141,23 @@ async def google_auth(data: GoogleAuthRequest, db: AsyncSession = Depends(get_db
             db.add(user)
 
     await db.commit()
-    await db.refresh(user)
 
+    result2 = await db.execute(
+        select(User).options(selectinload(User.role_info)).where(User.id == user.id)
+    )
+    user = result2.scalar_one()
     token = create_access_token({"sub": str(user.id)})
-    return AuthResponse(access_token=token, user=UserOut.model_validate(user))
+    return AuthResponse(access_token=token, user=_user_to_out(user))
 
 
 @router.get("/me", response_model=UserOut)
-async def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Return the currently authenticated user."""
-    return current_user
+    result = await db.execute(
+        select(User).options(selectinload(User.role_info)).where(User.id == current_user.id)
+    )
+    user = result.scalar_one()
+    return _user_to_out(user)
