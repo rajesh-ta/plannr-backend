@@ -1,12 +1,13 @@
 from pydantic import BaseModel
 from typing import Optional
-from app.schemas.user import UserOut
+from app.schemas.user import UserOut  # noqa: F401
 
 
 class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str
+    role_id: Optional[str] = None  # UUID of the role from GET /roles/
 
 
 class LoginRequest(BaseModel):

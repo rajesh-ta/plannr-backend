@@ -57,12 +57,19 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    # Validate role_id if provided
+    if data.role_id:
+        role_result = await db.execute(select(Role).where(Role.id == data.role_id))
+        if not role_result.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Invalid role_id")
+
     user = User(
-        id=str(uuid4()),
+        id=uuid4(),
         name=data.name,
         email=data.email,
         password_hash=get_password_hash(data.password),
         auth_provider="local",
+        role_id=data.role_id,
     )
     db.add(user)
     await db.commit()

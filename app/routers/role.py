@@ -11,18 +11,18 @@ from app.schemas.role import RoleCreate, RoleUpdate, RoleOut
 router = APIRouter(
     prefix="/roles",
     tags=["roles"],
-    dependencies=[Depends(get_current_user)],
 )
 
 
 @router.get("/", response_model=list[RoleOut])
 async def get_roles(db: AsyncSession = Depends(get_db)):
+    """Public — returns all active roles (used on signup page)."""
     result = await db.execute(select(Role).order_by(Role.role_name))
     roles = result.scalars().all()
     return roles
 
 
-@router.get("/{role_id}", response_model=RoleOut)
+@router.get("/{role_id}", response_model=RoleOut, dependencies=[Depends(get_current_user)])
 async def get_role(role_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
@@ -31,7 +31,7 @@ async def get_role(role_id: str, db: AsyncSession = Depends(get_db)):
     return role
 
 
-@router.post("/", response_model=RoleOut, status_code=201)
+@router.post("/", response_model=RoleOut, status_code=201, dependencies=[Depends(get_current_user)])
 async def create_role(data: RoleCreate, db: AsyncSession = Depends(get_db)):
     # Prevent duplicate role names
     existing = await db.execute(
@@ -47,7 +47,7 @@ async def create_role(data: RoleCreate, db: AsyncSession = Depends(get_db)):
     return role
 
 
-@router.put("/{role_id}", response_model=RoleOut)
+@router.put("/{role_id}", response_model=RoleOut, dependencies=[Depends(get_current_user)])
 async def update_role(
     role_id: str, data: RoleUpdate, db: AsyncSession = Depends(get_db)
 ):
@@ -64,7 +64,7 @@ async def update_role(
     return role
 
 
-@router.delete("/{role_id}", status_code=204)
+@router.delete("/{role_id}", status_code=204, dependencies=[Depends(get_current_user)])
 async def delete_role(role_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
