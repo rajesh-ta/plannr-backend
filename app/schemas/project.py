@@ -4,7 +4,6 @@ from uuid import UUID
 class ProjectCreate(BaseModel):
   name: str
   description: str | None = None
-  created_by: UUID
 
 class ProjectOut(BaseModel):
   id: UUID

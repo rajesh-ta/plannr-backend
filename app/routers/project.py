@@ -4,6 +4,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.project import Project
+from app.models.user import User
 from app.schemas.project import ProjectCreate, ProjectOut
 
 router = APIRouter(
@@ -13,9 +14,12 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=ProjectOut)
-async def create_project(data: ProjectCreate, db: AsyncSession = Depends(get_db)):
-  print("Creating project with data:", data)
-  project = Project(**data.model_dump())
+async def create_project(
+  data: ProjectCreate,
+  current_user: User = Depends(get_current_user),
+  db: AsyncSession = Depends(get_db),
+):
+  project = Project(**data.model_dump(), created_by=str(current_user.id))
   db.add(project)
   await db.commit()
   await db.refresh(project)
