@@ -26,3 +26,17 @@ class RoleOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class RolePermissionOut(BaseModel):
+    role_permission_id: UUID
+    permission_id: UUID
+    permission_name: str
+    is_granted: bool
+
+    class Config:
+        from_attributes = True
+
+
+class RolePermissionUpdate(BaseModel):
+    is_granted: bool

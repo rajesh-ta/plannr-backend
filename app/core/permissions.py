@@ -24,15 +24,15 @@ ALL_PERMISSIONS: list[str] = [
 def build_permissions_map(user: "User") -> dict[str, bool]:
     """Return a dict with all 12 permission keys.
 
-    Each value is *True* if the user's role grants that permission,
-    *False* otherwise.  Works safely when role_info / role_permissions
-    are not loaded (uses empty set).
+    Each value is *True* only if the user's role has a row for that permission
+    with is_granted=True.  Works safely when relationships are not loaded.
     """
     granted: set[str] = set()
     role = getattr(user, "role_info", None)
     if role is not None:
         for rp in getattr(role, "role_permissions", []):
-            perm = getattr(rp, "permission", None)
-            if perm is not None:
-                granted.add(perm.name)
+            if getattr(rp, "is_granted", False):
+                perm = getattr(rp, "permission", None)
+                if perm is not None:
+                    granted.add(perm.name)
     return {perm: (perm in granted) for perm in ALL_PERMISSIONS}

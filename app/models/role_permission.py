@@ -1,6 +1,6 @@
 from uuid import uuid4
 from typing import TYPE_CHECKING
-from sqlalchemy import Integer, ForeignKey
+from sqlalchemy import Integer, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
@@ -30,6 +30,7 @@ class RolePermission(Base):
         ForeignKey("boards.permissions.id", ondelete="CASCADE"),
         nullable=False,
     )
+    is_granted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # Relationships
     role: Mapped["Role"] = relationship(
