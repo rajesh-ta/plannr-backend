@@ -13,15 +13,25 @@ from app.core.security import (
 )
 from app.core.config import GOOGLE_CLIENT_ID
 from app.core.dependencies import get_current_user
+from app.core.permissions import build_permissions_map
 from app.models.user import User
+from app.models.role import Role
+from app.models.role_permission import RolePermission
 from app.schemas.auth import RegisterRequest, LoginRequest, GoogleAuthRequest, AuthResponse
 from app.schemas.user import UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# Reusable selectinload chain for deep-loading role → role_permissions → permission
+_ROLE_PERMISSIONS_LOAD = (
+    selectinload(User.role_info)
+    .selectinload(Role.role_permissions)
+    .selectinload(RolePermission.permission)
+)
+
 
 def _user_to_out(user: User) -> UserOut:
-    """Build a UserOut from an ORM User with role_info eagerly loaded."""
+    """Build a UserOut from an ORM User with role_info + permissions eagerly loaded."""
     return UserOut(
         id=user.id,
         name=user.name,
@@ -34,6 +44,7 @@ def _user_to_out(user: User) -> UserOut:
         avatar_url=user.avatar_url,
         auth_provider=user.auth_provider,
         created_at=user.created_at,
+        permissions=build_permissions_map(user),
     )
 
 
@@ -57,7 +68,7 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     result2 = await db.execute(
-        select(User).options(selectinload(User.role_info)).where(User.id == user.id)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).where(User.id == user.id)
     )
     user = result2.scalar_one()
     token = create_access_token({"sub": str(user.id)})
@@ -77,7 +88,7 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     result2 = await db.execute(
-        select(User).options(selectinload(User.role_info)).where(User.id == user.id)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).where(User.id == user.id)
     )
     user = result2.scalar_one()
     token = create_access_token({"sub": str(user.id)})
@@ -143,7 +154,7 @@ async def google_auth(data: GoogleAuthRequest, db: AsyncSession = Depends(get_db
     await db.commit()
 
     result2 = await db.execute(
-        select(User).options(selectinload(User.role_info)).where(User.id == user.id)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).where(User.id == user.id)
     )
     user = result2.scalar_one()
     token = create_access_token({"sub": str(user.id)})
@@ -157,7 +168,7 @@ async def get_me(
 ):
     """Return the currently authenticated user."""
     result = await db.execute(
-        select(User).options(selectinload(User.role_info)).where(User.id == current_user.id)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).where(User.id == current_user.id)
     )
     user = result.scalar_one()
     return _user_to_out(user)

@@ -1,9 +1,13 @@
 from datetime import datetime
 from uuid import uuid4
+from typing import TYPE_CHECKING
 from sqlalchemy import String, TIMESTAMP, Boolean, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.role_permission import RolePermission
 
 
 class Role(Base):
@@ -25,3 +29,8 @@ class Role(Base):
 
     # Reverse relationship to users
     users: Mapped[list] = relationship("User", back_populates="role_info", lazy="select")
+
+    # Relationship to RolePermission (used for RBAC deep-loads)
+    role_permissions: Mapped[list["RolePermission"]] = relationship(
+        "RolePermission", back_populates="role", lazy="select"
+    )

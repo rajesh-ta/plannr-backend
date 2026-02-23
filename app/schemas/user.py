@@ -30,6 +30,8 @@ class UserOut(BaseModel):
     avatar_url: Optional[str] = None
     auth_provider: str = "local"
     created_at: datetime
+    # RBAC: all 12 permission keys always present; True = granted by the user's role
+    permissions: dict[str, bool] = {}
 
     class Config:
         from_attributes = True

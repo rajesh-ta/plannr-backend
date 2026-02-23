@@ -7,13 +7,22 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.permissions import build_permissions_map
 from app.models.user import User
 from app.models.role import Role
+from app.models.role_permission import RolePermission
 from app.schemas.user import UserCreate, UserUpdate, UserOut
+
+# Reusable selectinload chain for deep-loading role → role_permissions → permission
+_ROLE_PERMISSIONS_LOAD = (
+    selectinload(User.role_info)
+    .selectinload(Role.role_permissions)
+    .selectinload(RolePermission.permission)
+)
 
 
 def _enrich_user(user: User) -> dict:
-    """Attach role_name from the loaded relationship (if any)."""
+    """Attach role_name and permissions from the loaded relationships (if any)."""
     return {
         "id": user.id,
         "name": user.name,
@@ -26,6 +35,7 @@ def _enrich_user(user: User) -> dict:
         "avatar_url": user.avatar_url,
         "auth_provider": user.auth_provider,
         "created_at": user.created_at,
+        "permissions": build_permissions_map(user),
     }
 
 
@@ -39,7 +49,7 @@ router = APIRouter(
 @router.get("/", response_model=list[UserOut])
 async def get_users(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(User).options(selectinload(User.role_info)).order_by(User.name)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).order_by(User.name)
     )
     users = result.scalars().all()
     return [_enrich_user(u) for u in users]
@@ -48,7 +58,7 @@ async def get_users(db: AsyncSession = Depends(get_db)):
 @router.get("/{user_id}", response_model=UserOut)
 async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(User).options(selectinload(User.role_info)).where(User.id == user_id)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).where(User.id == user_id)
     )
     user = result.scalar_one_or_none()
     if not user:
@@ -75,7 +85,7 @@ async def create_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     result2 = await db.execute(
-        select(User).options(selectinload(User.role_info)).where(User.id == user.id)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).where(User.id == user.id)
     )
     user = result2.scalar_one()
     return _enrich_user(user)
@@ -89,7 +99,7 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(User).options(selectinload(User.role_info)).where(User.id == user_id)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).where(User.id == user_id)
     )
     user = result.scalar_one_or_none()
     if not user:
@@ -122,7 +132,7 @@ async def update_user(
     await db.commit()
 
     result2 = await db.execute(
-        select(User).options(selectinload(User.role_info)).where(User.id == user_id)
+        select(User).options(_ROLE_PERMISSIONS_LOAD).where(User.id == user_id)
     )
     user = result2.scalar_one()
     return _enrich_user(user)

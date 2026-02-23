@@ -9,16 +9,19 @@ from app.models import sprint as sprint_model
 from app.models import task as task_model
 from app.models import user_story as user_story_model
 from app.models import role as role_model
+from app.core.config import CORS_ORIGINS
 
 app = FastAPI(title="Plannr Backend API", version="1.0.0")
 
 # Configure CORS
+# NOTE: allow_origins cannot be ["*"] when allow_credentials=True —
+# the browser will reject such responses. Use explicit origins instead.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(auth.router)
