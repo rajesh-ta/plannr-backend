@@ -8,6 +8,14 @@ import os
 
 load_dotenv()
 
+_raw_database_url = os.getenv("DATABASE_URL", "")
+if _raw_database_url.startswith("postgresql://"):
+    DATABASE_URL = _raw_database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif _raw_database_url.startswith("postgres://"):
+    DATABASE_URL = _raw_database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+else:
+    DATABASE_URL = _raw_database_url
+
 # Import Base and all models so their tables are registered in metadata
 from app.core.database import Base
 from app.models import task, user, project, sprint, user_story  # noqa: F401
@@ -16,8 +24,6 @@ config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-DATABASE_URL = os.getenv("DATABASE_URL")
 
 target_metadata = Base.metadata
 
