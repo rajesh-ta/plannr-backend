@@ -20,10 +20,15 @@ else:
 class Base(DeclarativeBase):
   pass
 
+# Only require SSL for remote databases (Render, Heroku, etc.).
+# Local PostgreSQL instances typically don't support SSL.
+_is_remote_db = "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL
+_connect_args = {"ssl": "require"} if _is_remote_db else {}
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=os.getenv("SQL_ECHO", "false").lower() == "true",
-    connect_args={"ssl": "require"},
+    connect_args=_connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(

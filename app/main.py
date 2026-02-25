@@ -15,11 +15,12 @@ app = FastAPI(title="Plannr Backend API", version="1.0.0")
 
 # Configure CORS
 # NOTE: allow_origins cannot be ["*"] when allow_credentials=True —
-# the browser will reject such responses. Use explicit origins instead.
+# browsers always block that combination. Use explicit origins instead.
+_allow_credentials = "*" not in CORS_ORIGINS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
