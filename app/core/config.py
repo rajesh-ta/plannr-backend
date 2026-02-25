@@ -13,6 +13,7 @@ GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
 # Defaults cover the two common local dev addresses.
 _raw_origins = os.getenv(
     "CORS_ORIGINS",
+    "*",
     "http://localhost:3000,http://127.0.0.1:3000",
 )
 CORS_ORIGINS: list[str] = [o.strip() for o in _raw_origins.split(",") if o.strip()]
